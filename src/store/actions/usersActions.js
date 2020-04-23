@@ -28,7 +28,7 @@ export const checkRegisterUser = (checkRegisterData) => {
           result: "Длина пароля не должна быть меньше 6",
         })
       );
-    } else if (checkRegisterData.phone.length === 12) {
+    } else if (checkRegisterData.phone.length !== 12) {
       dispatch(
         checkRegisterUserError({
           result: "Длина номер телефона должна быть 12",
@@ -75,8 +75,7 @@ export const registerUser = (userData) => {
         (response) => {
           let jwtData = jwt.verify(response.data.token, "mySecretKey");
           let userData = {
-            firstName: jwtData.firstName,
-            id: jwtData.id,
+            ...jwtData,
             token: response.data.token,
           };
           dispatch(registerUserSuccess(userData));
@@ -110,8 +109,7 @@ export const loginUser = (userData) => {
       (response) => {
         let jwtData = jwt.verify(response.data.token, "mySecretKey");
         let userData = {
-          firstName: jwtData.firstName,
-          id: jwtData.id,
+          ...jwtData,
           token: response.data.token,
         };
         dispatch(loginUserSuccess(userData));
@@ -130,15 +128,9 @@ export const loginUser = (userData) => {
 
 export const logoutUser = () => {
   return (dispatch, getState) => {
-    const token = getState().users.user.token;
-    const headers = {
-      Authorization: token,
-    };
-    axios.delete("/users/sessions", { headers }).then((response) => {
-      dispatch({ type: LOGOUT_USER });
-      NotificationManager.success(response.data.message);
-      dispatch(push("/"));
-    });
+    dispatch({ type: LOGOUT_USER });
+    NotificationManager.success("Успешно вышли с аккаунта");
+    dispatch(push("/"));
   };
 };
 

@@ -86,7 +86,9 @@ const Toolbar = ({ user, logout, page }) => {
               Уведомлении
             </RouterNavLink>
           </div>
-          <button className="apartmentsExtBtn">Выйти</button>
+          <button className="apartmentsExtBtn" onClick={() => logout()}>
+            Выйти
+          </button>
         </Container>
         {/*<img*/}
         {/*  className="loginRegisterRightTopImage"*/}

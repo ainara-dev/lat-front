@@ -13,7 +13,7 @@ import {
   ModalFooter,
 } from "reactstrap";
 import { connect } from "react-redux";
-import { loginUser } from "../../store/actions/usersActions";
+import { loginUser, logoutUser } from "../../store/actions/usersActions";
 import PromoBG from "../../assets/images/apartmentsPromo.svg";
 import PromoArrow from "../../assets/images/apartmentsArrow.svg";
 import DotsLeft from "../../assets/images/apartmentsBodyLeftDots.svg";
@@ -198,6 +198,7 @@ class Apartments extends Component {
 }
 
 const mapStateToProps = (state) => {
+  console.log("Global state: ", state);
   return {
     error: state.users.loginError,
     user: state.users.user,
