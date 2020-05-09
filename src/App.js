@@ -1,6 +1,5 @@
-import React, { Component, Fragment } from "react";
+import React, { Component } from "react";
 import Toolbar from "./components/UI/Toolbar/Toolbar";
-import { Container } from "reactstrap";
 import { withRouter } from "react-router";
 import { connect } from "react-redux";
 import { NotificationContainer } from "react-notifications";

@@ -20,6 +20,9 @@ import App from "./App";
 import productsReducer from "./store/reducers/products";
 import usersReducer from "./store/reducers/users";
 import categoriesReducer from "./store/reducers/categories";
+import premisesReducer from "./store/reducers/premises";
+import residentsReducer from "./store/reducers/residents";
+import paymentsReducer from './store/reducers/payments'
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
@@ -29,6 +32,9 @@ const rootReducer = combineReducers({
   products: productsReducer,
   users: usersReducer,
   categories: categoriesReducer,
+  premises: premisesReducer,
+  residents: residentsReducer,
+  payments: paymentsReducer,
   router: connectRouter(history),
 });
 
@@ -67,7 +73,6 @@ axios.interceptors.request.use((config) => {
   } catch {
     // do nothing
   }
-
   return config;
 });
 

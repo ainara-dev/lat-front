@@ -1,17 +1,6 @@
 import React, { Component } from "react";
-import {
-  UncontrolledAlert,
-  Container,
-  Form,
-  FormGroup,
-  Row,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-} from "reactstrap";
+import { UncontrolledAlert, Container, Modal, ModalBody } from "reactstrap";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
 import { loginUser, checkRegisterUser } from "../../store/actions/usersActions";
 import Photo from "../../assets/images/mainBig.png";
 import PhotoDots from "../../assets/images/mainDots.svg";

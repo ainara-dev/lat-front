@@ -71,27 +71,68 @@ export const registerUser = (userData) => {
     ) {
       NotificationManager.error("Выберите хотя бы одно направление");
     } else {
-      axios.post("/api/register", userData).then(
-        (response) => {
-          let jwtData = jwt.verify(response.data.token, "mySecretKey");
-          let userData = {
-            ...jwtData,
-            token: response.data.token,
-          };
-          dispatch(registerUserSuccess(userData));
-          dispatch(push("/"));
-          NotificationManager.success("Register success");
-        },
-        (error) => {
-          if (error.response && error.response.data) {
-            dispatch(registerUserError(error.response.data));
-          } else {
-            dispatch(
-              registerUserError({ result: "Нет соединение с интернетом" })
-            );
+      axios
+        .post("/api/getDirectionTypeID", userData.directionType)
+        .then(
+          (response) => {
+            userData.directionTypeID = response.data.result;
+          },
+          (error) => {
+            if (error.response && error.response.data) {
+              dispatch(registerUserError(error.response.data));
+            } else {
+              dispatch(
+                registerUserError({ result: "Нет соединение с интернетом" })
+              );
+            }
           }
-        }
-      );
+        )
+        .then((response) => {
+          axios.post("/api/register", userData).then(
+            (response) => {
+              let jwtData = jwt.verify(response.data.token, "mySecretKey");
+              let directionTypes = [];
+              for (let direction in jwtData.directionTypes) {
+                if (
+                  direction === "apartment" &&
+                  jwtData.directionTypes[direction] === true
+                ) {
+                  directionTypes.push(direction);
+                }
+                if (
+                  direction === "office" &&
+                  jwtData.directionTypes[direction] === true
+                ) {
+                  directionTypes.push(direction);
+                }
+                if (
+                  direction === "boutique" &&
+                  jwtData.directionTypes[direction] === true
+                ) {
+                  directionTypes.push(direction);
+                }
+              }
+
+              let userData = {
+                ...jwtData,
+                directionTypes,
+                token: response.data.token,
+              };
+              dispatch(registerUserSuccess(userData));
+              dispatch(push("/"));
+              NotificationManager.success("Register success");
+            },
+            (error) => {
+              if (error.response && error.response.data) {
+                dispatch(registerUserError(error.response.data));
+              } else {
+                dispatch(
+                  registerUserError({ result: "Нет соединение с интернетом" })
+                );
+              }
+            }
+          );
+        });
     }
   };
 };
@@ -108,10 +149,35 @@ export const loginUser = (userData) => {
     axios.post("/api/login", userData).then(
       (response) => {
         let jwtData = jwt.verify(response.data.token, "mySecretKey");
+
+        let directionTypes = [];
+        for (let direction in jwtData.directionTypes) {
+          if (
+            direction === "apartment" &&
+            jwtData.directionTypes[direction] === true
+          ) {
+            directionTypes.push(direction);
+          }
+          if (
+            direction === "office" &&
+            jwtData.directionTypes[direction] === true
+          ) {
+            directionTypes.push(direction);
+          }
+          if (
+            direction === "boutique" &&
+            jwtData.directionTypes[direction] === true
+          ) {
+            directionTypes.push(direction);
+          }
+        }
+
         let userData = {
           ...jwtData,
+          directionTypes,
           token: response.data.token,
         };
+        console.log("userData", userData);
         dispatch(loginUserSuccess(userData));
         dispatch(push("/"));
       },

@@ -1,22 +1,8 @@
-import React, { Component, Fragment } from "react";
-import {
-  Alert,
-  Button,
-  Col,
-  Container,
-  Form,
-  FormGroup,
-  Row,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-} from "reactstrap";
+import React, { Component } from "react";
+import { Container } from "reactstrap";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
 import DirectionBox from "../../components/DirectionBox/DirectionBox";
 import { registerUser } from "../../store/actions/usersActions";
-import Toolbar from "../../components/UI/Toolbar/Toolbar";
 import ImageDirectionLeft from "../../assets/images/directionLeft.svg";
 import ImageDirectionDots from "../../assets/images/directionDots.svg";
 import ImgContentLeft from "../../assets/images/directionContentLeft.svg";
@@ -40,14 +26,6 @@ class Direction extends Component {
       directionType: this.state,
       ...this.props.checkRegisterData,
     });
-  };
-
-  toggleLoginModal = () => {
-    this.setState({ loginModal: !this.state.loginModal });
-  };
-
-  toggleRegisterModal = () => {
-    this.setState({ registerModal: !this.state.registerModal });
   };
 
   render() {
