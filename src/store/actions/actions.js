@@ -10,7 +10,9 @@ import {
   CREATE_PAYMENT_SUCCESS,
   CREATE_PAYMENT_ERROR,
   FETCH_PAYMENTS_SUCCESS,
-  FETCH_PAYMENTS_ERROR
+  FETCH_PAYMENTS_ERROR,
+  FETCH_RESIDENTS_SUCCESS,
+  FETCH_RESIDENTS_ERROR
 } from "./actionTypes";
 import { push } from "connected-react-router";
 import axios from "../../axios-api";
@@ -157,7 +159,8 @@ export const createPayment = (payment) => dispatch => {
     .then(
       response => {
         dispatch(createPaymentSuccess())
-        dispatch(fetchPaymentsSuccess(response.data.result.reverse()))
+        dispatch(fetchPaymentsSuccess(response.data.result.payments.reverse()))
+        dispatch(fetchResidentSuccess(response.data.result.resident))
       },
       error => {
         if (error.response && error.response.data) {
@@ -193,6 +196,32 @@ export const fetchPayments = residentID => dispatch => {
         } else {
           dispatch(
             fetchPaymentsError({ result: "Нет соединение с интернетом" })
+          );
+        }
+      }
+    )
+}
+
+export const fetchResidentsSuccess = (residents) => {
+  return { type: FETCH_RESIDENTS_SUCCESS, residents }
+}
+
+export const fetchResidentsError = (error) => {
+  return { type: FETCH_RESIDENTS_ERROR, error }
+}
+
+export const fetchResidents = () => dispatch => {
+  axios.get('/api/getResidents')
+    .then(
+      response => {
+        dispatch(fetchResidentsSuccess(response.data.result))
+      },
+      error => {
+        if (error.response && error.response.data) {
+          dispatch(fetchPaymentsError(error.response.data));
+        } else {
+          dispatch(
+            fetchResidentsError({ result: "Нет соединение с интернетом" })
           );
         }
       }

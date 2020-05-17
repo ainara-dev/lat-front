@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Container, Table, Spinner, ModalBody, Modal } from "reactstrap";
+import { Container, Table, Spinner, ModalBody, Modal, Input } from "reactstrap";
 import { connect } from "react-redux";
 import {
   fetchResident,
@@ -14,11 +14,19 @@ import DotsRight from "../../assets/images/apartmentsBodyRightDots.svg";
 import PromoAvatar from "../../assets/images/infoPromoAvatar.svg";
 import PromoPhone from "../../assets/images/infoPromoPhoneIcon.svg";
 import PromoCurrency from "../../assets/images/infoPromoCurrencyIcon.svg";
+import DatePicker, { registerLocale } from "react-datepicker";
+import ru from "date-fns/locale/ru"; // the locale you want
+import "react-datepicker/dist/react-datepicker.css";
+import moment from "moment";
+import localization from 'moment/locale/ru';
+
+
 
 class Info extends Component {
   constructor(props) {
     super(props);
-
+    registerLocale("ru", ru); // register it with the name you want
+    moment.updateLocale('ru', localization);
 
     this.state = {
       isModalOpen: false,
@@ -27,39 +35,57 @@ class Info extends Component {
       premise: null,
       premiseType: null,
       resident: null,
-      paymentInfo: null,
+      paymentInfo: {
+        month: null
+      },
       payments: null
     };
   }
 
   componentDidMount() {
-    this.props.onFetchPremises(this.props.user.ID)
-    if(this.state.premises) {
-      this.getPremise()
+    this.props.onFetchPremises(this.props.user.id)
+
+    if(this.props.premises.length > 0) {
+      this.getPremise(this.props.premises)
+      let premiseID = this.props.match.params["0"];
+      const premise = this.props.premises.filter(
+        (premise) => premise.ID.toString() === premiseID
+      )[0];
+      console.log('Premise', this.props.premises)
+      this.getResident(premise.residentID)
     }
-    this.getResident();
+    if(this.props.resident ) {
+      this.getPayments(this.props.resident.ID)
+    } else if(this.state.premise) {
+      this.getResident(this.state.premise.residentID);
+    } else if(this.state.resident) {
+      this.getPayments(this.state.resident.ID)
+      this.getResident(this.state.resident.ID)
+    }
+
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if(!equal(prevProps.resident, this.props.resident)) {
       this.getPayments(this.props.resident.ID)
-      this.setState({resident: this.props.resident})
+      this.setState({resident: this.props.resident, payments: this.props.payments})
     } else if (!equal(prevProps.payments, this.props.payments)) {
+      this.getResident(this.state.premise.residentID)
       this.setState({payments: this.props.payments})
     } else if (prevProps.premises.length !== this.props.premises.length) {
       let premiseID = this.props.match.params["0"];
-      console.log("COMMON",this.props.premises)
       const premise = this.props.premises.filter(
         (premise) => premise.ID.toString() === premiseID
       )[0];
       this.getResident(premise.residentID)
+      this.getPremise(this.props.premises)
       this.setState({premises: this.props.premises, premise})
     }
   }
 
-  getPremise = () =>{
+  getPremise = (premises) =>{
     let premiseID = this.props.match.params["0"];
-    const premise = this.props.premises.filter(
+    const premise = premises.filter(
       (premise) => premise.ID.toString() === premiseID
     )[0];
 
@@ -72,9 +98,10 @@ class Info extends Component {
       } else {
         premiseType = "Бутик";
       }
-      this.setState({premiseType})
+      this.setState({premiseType, premise})
     } else {
-
+      console.log('else user', this.props.user.id)
+      this.props.onFetchPremises(this.props.user.id)
     }
   }
 
@@ -98,7 +125,6 @@ class Info extends Component {
 
   getResident = (premiseResidentID) => {
       this.props.onFetchResident(premiseResidentID);
-      console.log("Resident get ", this.props.resident);
       this.setState({ resident: this.props.resident });
   };
 
@@ -140,11 +166,11 @@ class Info extends Component {
   }
 
   render() {
-    const { isModalOpen, isPaymentModalOpen, premise, premiseType } = this.state;
-    const { resident, premises } = this.props;
-    console.log(this.state);
-    console.log("Props", this.props);
-    return premise && resident ? (
+    const { isModalOpen, isPaymentModalOpen, premise, premiseType, resident } = this.state;
+    console.log('State: ',this.state);
+    console.log("Props:", this.props);
+    console.log('has', premise, resident, premiseType)
+    return premiseType && premise && resident  ? (
       <>
 
         {/*Добавление оплаты*/}
@@ -157,13 +183,22 @@ class Info extends Component {
           <ModalBody className="mainModalBody">
             <h3 className="mainModalTitle">Заполните данные по оплате</h3>
             <form onSubmit={this.createPayment}>
-              <input
+
+              <DatePicker
+                locale="ru"
+                dateFormat="dd MMMM"
                 className="mainModalInput"
-                type="text"
-                name="month"
-                placeholder="Месяц"
-                onChange={this.inputChangePaymentHandler}
-              />
+                placeholderText="Месяц"
+                selected={this.state.paymentInfo.month}
+                onChange={date => {
+                  let newDate = {
+                    target: {
+                      name: 'month',
+                      value: date
+                    }
+                  }
+                this.inputChangePaymentHandler(newDate)
+              }} />
 
               <input
                 className="mainModalInput"
@@ -181,13 +216,17 @@ class Info extends Component {
                 onChange={this.inputChangePaymentHandler}
               />
 
-              <input
-                className="mainModalInput"
-                type="text"
+              <Input
+                className='mainModalInput'
+                type="select"
                 name="status"
-                placeholder="Статус"
                 onChange={this.inputChangePaymentHandler}
-              />
+                value={this.state.paymentInfo.status ? this.state.paymentInfo.status : ''}
+              >
+                <option value='' disabled>Статус</option>
+                <option value='полностью оплачено'>Полностью оплачено</option>
+                <option value='не полностью оплачено'>Не полностью оплачено</option>
+              </Input>
 
               <input
                 className="mainModalInput"
@@ -307,7 +346,7 @@ class Info extends Component {
                 <div className="infoPromoDebt">
                   <h5 className="infoPromoDebtText">
                     Общая задолженность клиента составляет:
-                    <span className="infoPromoDebtSum">20.000тг</span>
+                    <span className="infoPromoDebtSum">{resident.debt}тнг</span>
                   </h5>
                 </div>
               ) : null}
@@ -316,31 +355,33 @@ class Info extends Component {
         </Container>
         <div className="apartmentsListBlock">
           <span className="apartmentsBackgroundLogo">L A T</span>
-          <Container
-            className="myContainer"
-            style={{ position: "relative", padding: "105px 100px 84px" }}
-          >
+          {/*<Container*/}
+          {/*  className="myContainer"*/}
+          {/*  style={{ position: "relative", padding: "105px 100px 84px" }}*/}
+          {/*>*/}
             <button className="infoHistoryBtn" onClick={this.toggleAddPayment}>Добавить+</button>
             {this.state.payments && this.state.payments.length > 0 ?
-            <Table striped responsive style={{ color: "#fff" }}>
+            <table>
               <thead>
                 <tr>
-                  <th>Месяц</th>
-                  <th>Сумма (тг)</th>
-                  <th>Коммуналка (тг)</th>
-                  <th>Статус</th>
-                  <th>Остаток</th>
-                  <th>Показатель счетчика</th>
+                  <th><span className='tableHead'>Месяц</span></th>
+                  <th><span className='tableHead'>Сумма (тг)</span></th>
+                  <th><span className='tableHead'>Коммуналка (тг)</span></th>
+                  <th><span className='tableHead'>Статус</span></th>
+                  <th><span className='tableHead'>Остаток</span></th>
+                  <th><span className='tableHead'>Показатель счетчика</span></th>
                 </tr>
               </thead>
               <tbody>
               {this.state.payments.map(payment => {
+                let date_moment=moment(payment.month)
+                let req_format=date_moment.format("DD MMM")
                 return (
                   <tr key={payment.ID}>
-                    <th scope="row">{payment.month}</th>
+                    <td scope="row">{req_format}</td>
                     <td>{payment.sum}</td>
                     <td>{payment.communal}</td>
-                    <td>{payment.status}</td>
+                    <td style={{color: payment.status === 'полностью оплачено' ? '#61C858' : '#F93F3F'}}>{payment.status}</td>
                     <td>{payment.debt}</td>
                     <td>{payment.counterIndicator}</td>
                   </tr>
@@ -348,13 +389,13 @@ class Info extends Component {
               })}
 
               </tbody>
-            </Table>
+            </table>
               :
               <div className='infoHistoryNoData'>
-                <h2>Нет данных об оплате</h2>
+                <h2>Нет данных об оплате </h2>
               </div>
             }
-          </Container>
+          {/*</Container>*/}
         </div>
 
         <img className="apartmentsDotsLeft" src={DotsLeft} alt="" />

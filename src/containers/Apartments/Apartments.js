@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Container, Modal, ModalBody } from "reactstrap";
 import { connect } from "react-redux";
-import { createPremise, fetchPremises } from "../../store/actions/actions";
+import { createPremise, fetchPremises, fetchResidents } from "../../store/actions/actions";
 import { Link } from "react-router-dom";
 import PromoBG from "../../assets/images/apartmentsPromo.svg";
 import PromoArrow from "../../assets/images/apartmentsArrow.svg";
@@ -21,37 +21,51 @@ class Apartments extends Component {
       (premise) => premise.ID.toString() === this.premiseID
     )[0];
     this.state = {
-      notifyList: [],
+      notifyList: [2],
       isModalOpen: false,
       directionType: this.props.user.directionTypes[0],
       premiseInfo,
-      premises: []
+      premises: [],
+      residentsPayLeft: []
     }
   }
 
   componentDidMount() {
     this.props.fetchPremises(this.props.user.id);
+    this.props.onFetchResidents()
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if(!equal(prevProps.premises, this.props.premises)) {
       this.setState({premises: this.props.premises})
+    } else if(!equal(prevProps.residents, this.props.residents)) {
+      let residentsPayLeft = []
+      for(let resident of this.props.residents) {
+        if(resident.Payments.length > 0) {
+          let paymentsLeft = []
+          resident.Payments.forEach(payment => {
+            const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+            const firstDate = new Date(payment.month)
+            const secondDate = new Date(firstDate.getFullYear(),  firstDate.getMonth()+1, 1);
+            const diffDays = Math.round(Math.abs((firstDate - secondDate) / oneDay));
+            if(diffDays < 4) {
+              payment.daysLeft = diffDays - 1
+              paymentsLeft.push(payment)
+            }
+          })
+          if(paymentsLeft.length > 0) {
+            paymentsLeft = paymentsLeft.sort((a, b) => a.daysLeft - b.daysLeft)
+            resident.daysToNextMonth = paymentsLeft[0].daysLeft
+            residentsPayLeft.push(resident)
+          }
+        }
+      }
+      if(residentsPayLeft.length > 0) {
+        residentsPayLeft.sort((a, b) => a.daysToNextMonth - b.daysToNextMonth)
+        this.setState({residentsPayLeft})
+      }
     }
   }
-
-  withNotify = (
-    <div className="apartmentsPromoText">
-      <h1 className="apartmentsPromoTitle">
-        Здравствуйте,{" "}
-        <span className="apartmentsPromoTitlePart">
-          {this.props.user.firstName}!
-        </span>
-      </h1>
-      <span className="apartmentsPromoSubTitle">
-        Теперь управление бизнесом легко
-      </span>
-    </div>
-  );
 
   toggleAddApartment = () => {
     this.setState({ isModalOpen: !this.state.isModalOpen });
@@ -78,14 +92,25 @@ class Apartments extends Component {
   };
 
   render() {
-    const { isModalOpen, directionType, notifyList } = this.state;
-    console.log('Apartment Props', this.props)
+    const { isModalOpen, directionType, residentsPayLeft } = this.state;
+    console.log('Props', this.props)
+    console.log('State', this.state)
     return (
       <>
         <Container className="myContainer" style={{ position: "relative" }}>
           <div className="apartmentsPromo">
-            {notifyList.length === 0 ? (
-              this.withNotify
+            {residentsPayLeft.length === 0 ? (
+              <div className="apartmentsPromoText">
+                <h1 className="apartmentsPromoTitle">
+                  Здравствуйте,{" "}
+                  <span className="apartmentsPromoTitlePart">
+                    {this.props.user.firstName}!
+                  </span>
+                </h1>
+                <span className="apartmentsPromoSubTitle">
+                  Теперь управление бизнесом легко
+                </span>
+              </div>
             ) : (
               <div className="apartmentsPromoText2">
                 <h1 className="apartmentsPromoTitle2">
@@ -103,10 +128,10 @@ class Apartments extends Component {
                   </div>
                   <div className="apartmentsPromoNotifyResidentInfo">
                     <span className="apartmentsPromoNotifyFullName">
-                      Болатов Айболат
+                      {residentsPayLeft[0].lastName + ' ' + residentsPayLeft[0].firstName}
                     </span>
                     <span className="apartmentsPromoNotifyTimeLeft">
-                      Осталось 2 дня до оплаты аренды
+                      Осталось {residentsPayLeft[0].daysToNextMonth < 2 ? `${residentsPayLeft[0].daysToNextMonth} день` : `${residentsPayLeft[0].daysToNextMonth} дня`} до оплаты аренды
                     </span>
                     <button className="apartmentsPromoNotifyCall">
                       Позвонить
@@ -253,8 +278,9 @@ class Apartments extends Component {
                       </button>
                     );
                   })
+
               ) : (
-                <h3> Вы еще не добавили квартир</h3>
+                <h3 className='apartmentsNumberEmpty'> Вы еще не добавили квартиру </h3>
               )}
               <div
                 className="apartmentNumber apartmentsNumberAdd"
@@ -280,6 +306,7 @@ const mapStateToProps = (state) => {
     error: state.premises.premiseError,
     user: state.users.user,
     premises: state.premises.premises,
+    residents: state.residents.residents
   };
 };
 
@@ -287,6 +314,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     createPremise: (premiseData) => dispatch(createPremise(premiseData)),
     fetchPremises: (id) => dispatch(fetchPremises(id)),
+    onFetchResidents: () => dispatch(fetchResidents())
   };
 };
 
