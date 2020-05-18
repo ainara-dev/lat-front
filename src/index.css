@@ -263,7 +263,7 @@ input[type=number] {
 .apartmentsPromoNotifyOthers {
   position: absolute;
   right: 20px;
-  bottom: 20px;
+  bottom: 15px;
   font-family: Montserrat;
   font-style: normal;
   font-weight: 500;

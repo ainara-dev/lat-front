@@ -10,7 +10,7 @@ import {
 const initialState = {
   residentError: null,
   resident: null,
-  residents: null
+  residents: []
 };
 
 const reducer = (state = initialState, action) => {

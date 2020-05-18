@@ -38,28 +38,32 @@ class Apartments extends Component {
   componentDidUpdate(prevProps, prevState, snapshot) {
     if(!equal(prevProps.premises, this.props.premises)) {
       this.setState({premises: this.props.premises})
-    } else if(!equal(prevProps.residents, this.props.residents)) {
+    } else if(this.props.premises.length > 0 && this.props.residents.length > 0 && !equal(prevProps.residents, this.props.residents)) {
       let residentsPayLeft = []
-      for(let resident of this.props.residents) {
-        if(resident.Payments.length > 0) {
-          let paymentsLeft = []
-          resident.Payments.forEach(payment => {
-            const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
-            const firstDate = new Date(payment.month)
-            const secondDate = new Date(firstDate.getFullYear(),  firstDate.getMonth()+1, 1);
-            const diffDays = Math.round(Math.abs((firstDate - secondDate) / oneDay));
-            if(diffDays < 4) {
-              payment.daysLeft = diffDays - 1
-              paymentsLeft.push(payment)
+      console.log('Residents show ID', this.props.residents)
+      this.props.premises.filter(premise => premise.userID == this.props.user.id)
+        .forEach(premise => {
+          this.props.residents.forEach(resident => {
+            if(resident.ID == premise.residentID && resident.Payments.length > 0) {
+              let paymentsLeft = []
+              resident.Payments.forEach(payment => {
+                const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+                const firstDate = new Date(payment.month)
+                const secondDate = new Date(firstDate.getFullYear(),  firstDate.getMonth()+1, 1);
+                const diffDays = Math.round(Math.abs((firstDate - secondDate) / oneDay));
+                if(diffDays < 4) {
+                  payment.daysLeft = diffDays - 1
+                  paymentsLeft.push(payment)
+                }
+              })
+              if(paymentsLeft.length > 0) {
+                paymentsLeft = paymentsLeft.sort((a, b) => a.daysLeft - b.daysLeft)
+                resident.daysToNextMonth = paymentsLeft[0].daysLeft
+                residentsPayLeft.push(resident)
+              }
             }
           })
-          if(paymentsLeft.length > 0) {
-            paymentsLeft = paymentsLeft.sort((a, b) => a.daysLeft - b.daysLeft)
-            resident.daysToNextMonth = paymentsLeft[0].daysLeft
-            residentsPayLeft.push(resident)
-          }
-        }
-      }
+        })
       if(residentsPayLeft.length > 0) {
         residentsPayLeft.sort((a, b) => a.daysToNextMonth - b.daysToNextMonth)
         this.setState({residentsPayLeft})
